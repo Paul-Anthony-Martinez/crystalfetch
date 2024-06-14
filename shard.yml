@@ -1,0 +1,13 @@
+name: crystalfetch
+version: 0.1.0
+
+authors:
+  - Antonio Martinez <pablo14pamg@gmail.com>
+
+targets:
+  crystalfetch:
+    main: src/crystalfetch.cr
+
+crystal: '>= 1.12.1'
+
+license: MIT
