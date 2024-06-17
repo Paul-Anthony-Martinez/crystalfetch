@@ -19,12 +19,11 @@ class CrystalFetch
    @hostname = "";
    @cpu_count = 0;
    @kernel = Kernel.new();
-
    struct Kernel
+      pproperty version = ""
       property name = ""
       property release = ""
    end
-
    def run()
       get_os();
       get_hostname();
@@ -34,11 +33,8 @@ class CrystalFetch
    end
    def get_os()
       cmd = "uname";
-      args = ["-s"];
-      stdout = IO::Memory.new();
-      stderr = IO::Memory.new();
-      status = Process.run(cmd, args: args, output: stdout);
-      @os_name = stdout.to_s();
+      args = ["-o"];
+      @os_name = run_cmd(cmd, args);
    end
    def get_hostname()
       @hostname = System.hostname;
@@ -49,11 +45,20 @@ class CrystalFetch
    def get_kernel_info()
       cmd = "uname";
       args = ["-s"];
-      stdout = IO::Memory.new();
-      status = Process.run(cmd, args:
-args, output: stdout);
-      @kernel.name = stdout.to_s();
+      @kernel.name = run_cmd(cmd, args);
    end
+##########################################
+   def run_cmd(cmd, args)
+      stdout = IO::Memory.new();
+      status = Process.run(
+         cmd, 
+         args: args, 
+         output: stdout
+      );
+      return stdout.to_s();
+   end
+##########################################
+
    def print_out()
       puts "os: #{@os_name}";
       puts "hostname: #{@hostname}";
