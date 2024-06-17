@@ -25,5 +25,10 @@ struct Information
    property os_name;
 end
 
-fetch = CrystalFetch.new()
-fetch.run()
+# main
+def main()
+  fetch = CrystalFetch.new()
+  fetch.run()
+end
+
+main();
