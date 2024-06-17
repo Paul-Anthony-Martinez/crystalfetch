@@ -20,7 +20,7 @@ class CrystalFetch
    @cpu_count = 0;
    @kernel = Kernel.new();
    struct Kernel
-      pproperty version = ""
+      property version = ""
       property name = ""
       property release = ""
    end
