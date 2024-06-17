@@ -24,4 +24,5 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [Antonio Martinez](https://github.com/your-github-user) - creator and maintainer
+- [Antonio Martínez](https://github.com/your-github-user) - creator and maintainer
+- [Emanuel Avilés](https://github.com/evilenx) - creator and maintainer
