@@ -1,26 +1,35 @@
-#-----------------------------------#
-# Place true or false to enable ora #
-# disable the information that fetch#
-# will display!                     #
-#-----------------------------------#
+#------------------------------------#
+# Place true or false to enable or   #
+# disable the information that fetch #
+# will display!                      #
+#------------------------------------#
 {
    "os_name": true,
    "hostname": true,
-   "cpu_count": true
+   "cpu_count": true,
+   "kernel": {
+      "name": true,
+      "version": true,
+      "release": true
+   }
 }
 #-----------------------------------#
 class CrystalFetch
    @os_name = "";
    @hostname = "";
    @cpu_count = 0;
-   @kernel = {
-      name => "",
-      release => 0
-   }
+   @kernel = Kernel.new();
+
+   struct Kernel
+      property name = ""
+      property release = ""
+   end
+
    def run()
       get_os();
       get_hostname();
       get_cpu_count();
+      get_kernel_info();
       print_out();
    end
    def get_os()
@@ -37,10 +46,19 @@ class CrystalFetch
    def get_cpu_count()
       @cpu_count = System.cpu_count.to_i32;
    end
+   def get_kernel_info()
+      cmd = "uname";
+      args = ["-s"];
+      stdout = IO::Memory.new();
+      status = Process.run(cmd, args:
+args, output: stdout);
+      @kernel.name = stdout.to_s();
+   end
    def print_out()
       puts "os: #{@os_name}";
       puts "hostname: #{@hostname}";
       puts "cpu_count: #{@cpu_count}";
+      puts "kernel_name: #{@kernel.name}";
    end
 end
 
