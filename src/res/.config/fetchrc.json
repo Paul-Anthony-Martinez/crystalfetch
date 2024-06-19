@@ -1,0 +1,11 @@
+{
+	"os_name": true,
+   "hostname": true,
+   "userId": true,
+   "cpu_count": true,
+   "kernel": {
+      "name": true,
+      "version": true,
+		"release": true
+	}
+}
