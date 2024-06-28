@@ -4,37 +4,46 @@ class CrystalFetch
    @os_name = "";
    @hostname = "";
    @cpu_count = 0;
+   
    @kernel = Kernel.new();
-   @rc_file = "";
-
+   @uptime = Uptime.new();
+   
+   @config_path = Path.posix("crystalfetch/src/res/.config/fetchrc.json").expand();
+   
    struct Kernel
       property version = ""
       property name = ""
       property release = ""
    end
+   
+   struct Uptime
+      property up = 0.0
+      property idle = 0.0
+   end
+
+   @rc_config = ""
+
+   def run()
+      #load_config
+      get_os();
+      get_username();
+      get_hostname();
+      get_cpu_count();
+      get_kernel_info();
+      get_uptime
+   end
 
    def load_config()
-      file_path="res/.config/fetchrc.json"
+      puts @config_path
       begin
-         json=File.open(file_path) do |file|
-            @rc_file = JSON.parse(file);
+         json = File.open(@config_path) do |file|
+            file = JSON.parse(file);
+            #@rc_config = file.as_h
          end
-         except = Exception.new("File not found.")
-      raise except
       rescue except
          puts "#{STDERR}"
          puts "#{except}"
       end
-      puts @rc_file
-   end
-
-   def run()
-      get_os();
-      get_hostname();
-      get_cpu_count();
-      get_kernel_info();
-      load_config
-      print_out();
    end
 
    def get_os()
@@ -43,12 +52,31 @@ class CrystalFetch
       @os_name = run_cmd(cmd, args);
    end
 
+   def get_username()
+      cmd = "whoami"
+      args = [" "]
+
+      @hostname = run_cmd(cmd, args);
+      puts "Host: #{@hostname}"
+   end
+
    def get_hostname()
       @hostname = System.hostname;
    end
 
    def get_cpu_count()
       @cpu_count = System.cpu_count.to_i32;
+   end
+
+   def get_uptime()
+      uptime_path = "/proc/uptime"
+      upt = content = File.open(uptime_path) do |file|
+         file.gets_to_end
+      end
+      
+      time = upt.split();
+      @uptime.up = time[0].to_f
+      @uptime.idle = time[1].to_f
    end
 
    def get_kernel_info()
@@ -70,20 +98,11 @@ class CrystalFetch
    def run_cmd(cmd, args)
       stdout = IO::Memory.new();
       status = Process.run(
-         cmd, 
+         command: cmd,
          args: args, 
          output: stdout
       );
       return stdout.to_s();
-   end
-
-   def print_out()
-      puts "os: #{@os_name}";
-      puts "hostname: #{@hostname}";
-      puts "cpu_count: #{@cpu_count}";
-      puts "kernel_name: #{@kernel.name}";
-      puts "kernel_release: #{@kernel.release}";
-      puts "kernel_version: #{@kernel.version}";
    end
 end
 
