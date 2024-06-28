@@ -1,11 +1,29 @@
 {
-	"os_name": true,
-   "hostname": true,
-   "userId": true,
-   "cpu_count": true,
-   "kernel": {
+	"OSname": true,
+   "Host": true,
+   "UserId": true,
+   "CpuCount": true,
+   "Kernel": {
       "name": true,
       "version": true,
 		"release": true
-	}
+	},
+   "Machine": true,
+   "Distribution": true,
+   "OperatingSystem": true,
+   "DesktopEnvironment": true,
+   "WindowManager": true,
+   "Packages": true,
+   "Shell": true,
+   "Terminal": true,
+   "LocalIP": true,
+   "Backlight": true,
+   "Resolution": true,
+   "Uptime": true,
+   "Processor": true,
+   "ProcessorLoad": true,
+   "Memory": true,
+   "Battery": true,
+   "GPU": true,
+   "DiskSpace": true
 }
