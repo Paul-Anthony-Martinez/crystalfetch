@@ -1,27 +1,23 @@
 require "json";
+require "system/user";
 
 class CrystalFetch
-   @os_name = "";
+   @osname = "";
+   @username = "";
    @hostname = "";
    @cpu_count = 0;
-   
    @kernel = Kernel.new();
-   @uptime = Uptime.new();
-   
+   @uptime = "";
    @config_path = Path.posix("crystalfetch/src/res/.config/fetchrc.json").expand();
+   @rc_config = ""
+   @memoryinfo = ""
+   @shellname = ""
    
    struct Kernel
       property version = ""
       property name = ""
       property release = ""
    end
-   
-   struct Uptime
-      property up = 0.0
-      property idle = 0.0
-   end
-
-   @rc_config = ""
 
    def run()
       #load_config
@@ -31,6 +27,25 @@ class CrystalFetch
       get_cpu_count();
       get_kernel_info();
       get_uptime
+      get_meminfo();
+      get_shellname();
+      printout;
+   end
+
+   def printout()
+      printf("%s@%s\n", @username.strip, @hostname.lstrip);
+      puts "-----------------------"
+      puts "os: #{@osname}"
+      puts "uptime: #{@uptime}"
+      puts "cpu: #{@cpu_count}"
+      puts "kernel:"
+      puts " - #{@kernel.name}"
+      puts " - #{@kernel.release}"
+      puts "Shell:\t#{@shellname}"
+      puts "Memory: "
+      #printf(" - Total:\t%.0f mb\n", @memoryinfo.split()[1].to_i / div);
+      #printf(" - Free:\t%.0f bb\n", @memoryinfo.split()[4].to_i / div);
+      #printf(" - Available:\t%.0f mb\n", @memoryinfo.split()[7].to_i / div);
    end
 
    def load_config()
@@ -49,15 +64,13 @@ class CrystalFetch
    def get_os()
       cmd = "uname";
       args = ["-o"];
-      @os_name = run_cmd(cmd, args);
+      @osname = run_cmd(cmd, args);
+      @osname = @osname.strip
    end
 
    def get_username()
       cmd = "whoami"
-      args = [" "]
-
-      @hostname = run_cmd(cmd, args);
-      puts "Host: #{@hostname}"
+      @username = run_cmd(cmd);
    end
 
    def get_hostname()
@@ -69,14 +82,64 @@ class CrystalFetch
    end
 
    def get_uptime()
-      uptime_path = "/proc/uptime"
-      upt = content = File.open(uptime_path) do |file|
-         file.gets_to_end
-      end
+      cmd = "uptime";
+      uptime_out = run_cmd(cmd);
+      uptime_tmp = uptime_out.split(" ")[3].to_s
+      puts uptime_tmp
+      @uptime = "#{uptime_tmp.split(":")[0]}"
+   end
+
+   def get_meminfo()
+      meminfo_path = "/proc/meminfo"
+      meminfo = File.read_lines(meminfo_path)
+
+      memtotal=0;
+      memfree=0;
+      buffers=0;
+      cached=0;
+      shmem=0
+      usedmem=0;
+      sreclaimable=0
       
-      time = upt.split();
-      @uptime.up = time[0].to_f
-      @uptime.idle = time[1].to_f
+      meminfo.each do |ln|
+         if /MemTotal/.match(ln)
+            t = /\d+/.match(ln.to_s)
+            memtotal = t.to_s.to_i
+         elsif /MemFree/.match(ln)
+            t = /\d+/.match(ln.to_s)
+            memfree = t.to_s.to_i
+         elsif /Shmem/.match(ln)
+            t = /\d+/.match(ln.to_s)
+            shmem = t.to_s.to_i
+         elsif /Buffers/.match(ln)
+            t = /\d+/.match(ln.to_s)
+            buffers = t.to_s.to_i
+         elsif /Cached/.match(ln)
+            t = /\d+/.match(ln.to_s)
+            cached = t.to_s.to_i
+         elsif /SReclaimable/.match(ln)
+            t = /\d+/.match(ln.to_s)
+            sreclaimable = t.to_s.to_i
+         end
+      end
+
+      # MemUsed = Memtotal + Shmem - MemFree - Buffers - Cached - SReclaimable
+      usedmem = memtotal + shmem - memfree - buffers - cached - sreclaimable
+        
+      puts "#{usedmem /1024}"
+      puts "#{(usedmem = (usedmem /1024))/1024}"
+   end
+
+   def get_shellname()
+      passwd_path = "/etc/passwd"
+      passwd = File.read_lines(passwd_path)
+      user_ln = ""
+      passwd.each do |ln|
+         if /#{@username.to_s.strip}/.match(ln.to_s)
+            user_ln = ln.split(":")
+         end
+      end
+      @shellname = user_ln[6].to_s
    end
 
    def get_kernel_info()
@@ -95,13 +158,21 @@ class CrystalFetch
       end
    end
  
-   def run_cmd(cmd, args)
+   def run_cmd(cmd, args = [""])
       stdout = IO::Memory.new();
-      status = Process.run(
-         command: cmd,
-         args: args, 
-         output: stdout
-      );
+      if args.size == 1 && args[0] == ""
+         status = Process.run(
+            command: cmd,
+            output: stdout,
+            shell: true
+         );
+      else
+         status = Process.run(
+            command: cmd,
+            args: args, 
+            output: stdout
+         );
+      end
       return stdout.to_s();
    end
 end
