@@ -1,5 +1,4 @@
 {
-	"OSname": true,
    "Host": true,
    "UserId": true,
    "CpuCount": true,
