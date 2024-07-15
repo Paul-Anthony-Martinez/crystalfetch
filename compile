@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ ! -d "./bin" ]
+then
+	mkdir bin
+fi
+crystal build src/crystalfetch.cr -o bin/crfetch --release --error-trace -s -p -t --verbose --no-debug -O3
