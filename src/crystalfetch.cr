@@ -10,25 +10,29 @@ class CrystalFetch
    @uptime = "";
    @config_path = Path.posix("crystalfetch/src/res/.config/fetchrc.json").expand();
    @rc_config = ""
-   @memoryinfo = ""
+   @meminfo = MemInfo.new();
    @shellname = ""
    
+	struct MemInfo
+		property usedMem = 0.0;
+		property memTotal = 0.0;
+	end
    struct Kernel
-      property version = ""
-      property name = ""
-      property release = ""
+      property version = "";
+      property name = "";
+      property release = "";
    end
 
    def run()
       #load_config
-      get_os();
-      get_username();
-      get_hostname();
-      get_cpu_count();
-      get_kernel_info();
+      get_os;
+      get_username;
+      get_hostname;
+      get_cpu_count;
+      get_kernel_info;
       get_uptime
-      get_meminfo();
-      get_shellname();
+      get_meminfo;
+      get_shellname;
       printout;
    end
 
@@ -36,20 +40,17 @@ class CrystalFetch
       printf("%s@%s\n", @username.strip, @hostname.lstrip);
       puts "-----------------------"
       puts "os: #{@osname}"
+      puts "Hostname: #{@hostname}"
       puts "uptime: #{@uptime}"
       puts "cpu: #{@cpu_count}"
       puts "kernel:"
       puts " - #{@kernel.name}"
       puts " - #{@kernel.release}"
-      puts "Shell:\t#{@shellname}"
-      puts "Memory: "
-      #printf(" - Total:\t%.0f mb\n", @memoryinfo.split()[1].to_i / div);
-      #printf(" - Free:\t%.0f bb\n", @memoryinfo.split()[4].to_i / div);
-      #printf(" - Available:\t%.0f mb\n", @memoryinfo.split()[7].to_i / div);
+      puts "Shell: #{@shellname}"
+      printf("Memory: %.fmb / %.fmb\n", @meminfo.usedMem, @meminfo.memTotal);
    end
 
    def load_config()
-      puts @config_path
       begin
          json = File.open(@config_path) do |file|
             file = JSON.parse(file);
@@ -63,9 +64,13 @@ class CrystalFetch
 
    def get_os()
       cmd = "uname";
-      args = ["-o"];
-      @osname = run_cmd(cmd, args);
-      @osname = @osname.strip
+      args = ["-o", "-m"];
+		osname_s = "";
+		args.each do |arg|
+      	cmd_o = run_cmd(cmd, [arg]);
+			osname_s = osname_s.lstrip + " " + cmd_o.strip;
+		end
+		@osname = osname_s;
    end
 
    def get_username()
@@ -83,51 +88,48 @@ class CrystalFetch
 
    def get_uptime()
       cmd = "uptime";
-      uptime_out = run_cmd(cmd);
-      uptime_tmp = uptime_out.split(" ")[3].to_s
-      puts uptime_tmp
-      @uptime = "#{uptime_tmp.split(":")[0]}"
+		args = ["--pretty"]
+      uptime_out = run_cmd(cmd, args);
+      @uptime = uptime_out
    end
 
    def get_meminfo()
       meminfo_path = "/proc/meminfo"
       meminfo = File.read_lines(meminfo_path)
 
-      memtotal=0;
-      memfree=0;
-      buffers=0;
-      cached=0;
-      shmem=0
-      usedmem=0;
-      sreclaimable=0
+      memtotal = 0;
+      memfree = 0;
+      buffers = 0;
+      cached = 0;
+      shmem = 0
+      usedmem = 0;
+      sreclaimable = 0
       
       meminfo.each do |ln|
-         if /MemTotal/.match(ln)
+         if /^MemTotal:/.match(ln)
             t = /\d+/.match(ln.to_s)
             memtotal = t.to_s.to_i
-         elsif /MemFree/.match(ln)
+         elsif /^MemFree:/.match(ln)
             t = /\d+/.match(ln.to_s)
             memfree = t.to_s.to_i
-         elsif /Shmem/.match(ln)
+         elsif /^Shmem:/.match(ln)	
             t = /\d+/.match(ln.to_s)
             shmem = t.to_s.to_i
-         elsif /Buffers/.match(ln)
+         elsif /^Buffers:/.match(ln)
             t = /\d+/.match(ln.to_s)
             buffers = t.to_s.to_i
-         elsif /Cached/.match(ln)
-            t = /\d+/.match(ln.to_s)
+         elsif /^Cached:/.match(ln)
+            t = /\d+/.match(ln.to_s)	
             cached = t.to_s.to_i
-         elsif /SReclaimable/.match(ln)
+         elsif /^SReclaimable:/.match(ln)
             t = /\d+/.match(ln.to_s)
             sreclaimable = t.to_s.to_i
          end
       end
 
+		@meminfo.memTotal = memtotal / 1024;
       # MemUsed = Memtotal + Shmem - MemFree - Buffers - Cached - SReclaimable
-      usedmem = memtotal + shmem - memfree - buffers - cached - sreclaimable
-        
-      puts "#{usedmem /1024}"
-      puts "#{(usedmem = (usedmem /1024))/1024}"
+      @meminfo.usedMem = (memtotal + shmem - memfree - buffers - cached - sreclaimable) / 1024;
    end
 
    def get_shellname()
