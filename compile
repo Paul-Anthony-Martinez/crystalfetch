@@ -1,7 +1,4 @@
-#!/bin/sh
-
-if [ ! -d "./bin" ]
-then
-	mkdir bin
-fi
-crystal build src/crystalfetch.cr -o bin/crfetch --release --error-trace -s -p -t --verbose --no-debug -O3
+# Check if the bin directory exists first!
+[[ ! -d "./bin" ]] && mkdir ./bin
+# Build the binary for release, O3 optimization, no debug info and show the progress as verbose as possible!
+crystal build src/crystalfetch.cr -o bin/crystalfetch --release --error-trace -s -p -t --verbose --no-debug -O3
